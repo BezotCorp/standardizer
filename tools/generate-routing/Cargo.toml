@@ -6,6 +6,9 @@ publish = false
 
 [dependencies]
 bincode-next = "3"
-common = { package = "standardizer-common", path = "../../libraries/common", features = ["encode", "source"] }
+common = { package = "standardizer-common", path = "../../libraries/common", features = [
+  "encode",
+  "source",
+] }
 ron = "0.12"
 serde = { version = "1", features = ["derive"] }
