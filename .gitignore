@@ -1,3 +1,2 @@
 **/target/
-
-/data/standardizer/routing.bin
+node_modules/

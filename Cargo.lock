@@ -34,21 +34,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "common"
-version = "0.1.0"
-dependencies = [
- "bincode-next",
- "serde",
-]
-
-[[package]]
 name = "generate-routing"
 version = "0.1.0"
 dependencies = [
  "bincode-next",
- "common",
  "ron",
  "serde",
+ "standardizer-common",
 ]
 
 [[package]]
@@ -163,10 +155,18 @@ name = "standardizer"
 version = "0.1.0"
 dependencies = [
  "bincode-next",
- "common",
  "ron",
  "serde",
  "serde_json",
+ "standardizer-common",
+]
+
+[[package]]
+name = "standardizer-common"
+version = "0.1.0"
+dependencies = [
+ "bincode-next",
+ "serde",
 ]
 
 [[package]]
