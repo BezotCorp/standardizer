@@ -4,10 +4,8 @@ mod conformance;
 mod conformance_intent;
 mod conformance_pipeline;
 mod git_repository;
-mod route;
 mod routing;
 mod rustfmt;
-mod tool;
 mod tracked_file;
 
 use conformance_pipeline::ConformancePipeline;

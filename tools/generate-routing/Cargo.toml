@@ -1,0 +1,11 @@
+[package]
+name = "generate-routing"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+bincode-next = "3"
+common = { path = "../../libraries/common", features = ["encode", "source"] }
+ron = "0.12"
+serde = { version = "1", features = ["derive"] }

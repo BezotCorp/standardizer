@@ -1,7 +1,8 @@
 use crate::{
     biome::Biome, conformance_intent::ConformanceIntent, routing::Routing, rustfmt::Rustfmt,
-    tool::Tool, tracked_file::TrackedFile,
+    tracked_file::TrackedFile,
 };
+use common::tool::Tool;
 use std::{collections::BTreeMap, error::Error, path::Path};
 
 pub(crate) struct Conformance;
@@ -12,7 +13,7 @@ impl Conformance {
         files: &[TrackedFile],
         intent: ConformanceIntent,
     ) -> Result<(), Box<dyn Error>> {
-        let routing = Routing::load(root)?;
+        let routing = Routing::load()?;
         let mut batches: BTreeMap<Tool, Vec<&Path>> = BTreeMap::new();
 
         for file in files {
