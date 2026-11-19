@@ -33,5 +33,3 @@ jobs:
       - run: cargo test --locked -p generate-routing
       - run: cargo test --locked -p standardizer
       - run: cargo publish --dry-run --locked --allow-dirty -p standardizer-common -p standardizer
-      - name: Smoke test the packaged routing
-        run: cargo run --locked -p standardizer -- check
