@@ -4,7 +4,13 @@ Standardizer checks or fixes the conformance of files in a Git repository by dis
 
 ## Installation
 
-Download the archive for your platform from the GitHub Releases page, extract it, and place the `standardizer` executable in a directory listed in your `PATH`.
+Install from crates.io:
+
+```sh
+cargo install standardizer --locked
+```
+
+Or download the archive for your platform from the GitHub Releases page, extract it, and place the `standardizer` executable in a directory listed in your `PATH`.
 
 Standardizer expects the following tools to be available when they are required by the files in a repository:
 
@@ -33,17 +39,24 @@ The distributed executable contains its routing configuration. Rust files are ha
 
 ## Building from source
 
-Building requires a Rust toolchain compatible with edition 2024. The default development build reads the RON routing source directly:
+Building requires a Rust toolchain compatible with edition 2024. The default build embeds `product/data/routing.bin`:
 
 ```sh
 cargo build --locked
 ```
 
-To build the distributable executable, generate the binary routing data and enable only the embedded routing mode:
+For development, the `routing-source` feature reads `product/data/routing.ron` directly at runtime:
+
+```sh
+cargo build --locked --features routing-source
+```
+
+Regenerate the committed `product/data/routing.bin` after changing `product/data/routing.ron`; CI fails when it is out of date:
 
 ```sh
 cargo run --locked -p generate-routing
-cargo build --release --locked -p standardizer --no-default-features --features embedded-routing
 ```
 
-The generated `data/standardizer/routing.bin` is ignored by Git. Regenerate it after changing `data/standardizer/routing.ron`.
+## License
+
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).

@@ -18,10 +18,7 @@ pub(crate) struct Routing {
 impl Routing {
     #[cfg(feature = "routing-source")]
     pub(crate) fn load() -> Result<Self, Box<dyn Error>> {
-        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .parent()
-            .ok_or("product must be located inside the Standardizer repository")?
-            .join("data/standardizer/routing.ron");
+        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("data/routing.ron");
         let routing: Self = ron::from_str(&fs::read_to_string(path)?)?;
 
         routing.validate()?;
@@ -30,7 +27,7 @@ impl Routing {
 
     #[cfg(all(not(feature = "routing-source"), feature = "embedded-routing"))]
     pub(crate) fn load() -> Result<Self, Box<dyn Error>> {
-        let bytes = include_bytes!("../../data/standardizer/routing.bin");
+        let bytes = include_bytes!("../data/routing.bin");
         let (routing, consumed): (Self, usize) = decode_from_slice(bytes, config::standard())?;
         if consumed != bytes.len() {
             return Err("trailing data in routing binary".into());

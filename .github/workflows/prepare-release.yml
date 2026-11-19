@@ -1,0 +1,153 @@
+name: Prepare release
+
+on:
+  pull_request_target:
+    branches:
+      - main
+    types:
+      - closed
+
+  workflow_dispatch:
+
+concurrency:
+  group: prepare-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Prepare release pull request
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.pull_request.merged == true &&
+        github.event.pull_request.head.ref == 'dev'
+      )
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Generate release bot token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.BEZOTCORP_RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.BEZOTCORP_RELEASE_BOT_PRIVATE_KEY }}
+
+      - name: Checkout updated main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: true
+
+      - name: Configure release bot
+        run: |
+          git config user.name "bezotcorp-release-bot[bot]"
+          git config user.email "bezotcorp-release-bot[bot]@users.noreply.github.com"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install cargo-edit
+        run: cargo install cargo-edit --locked
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.12.0
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install release dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Calculate and prepare release
+        id: release
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: pnpm release:prepare
+
+      - name: Create release pull request
+        if: steps.release.outputs.created == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          RELEASE_BRANCH="release/${RELEASE_TAG}"
+
+          EXISTING_PR="$(
+            gh pr list \
+              --repo "$GITHUB_REPOSITORY" \
+              --state open \
+              --base main \
+              --head "$RELEASE_BRANCH" \
+              --json number \
+              --jq '.[0].number // empty'
+          )"
+
+          if [[ -n "$EXISTING_PR" ]]; then
+            echo "Release PR #${EXISTING_PR} already exists."
+
+            gh pr merge "$EXISTING_PR" \
+              --repo "$GITHUB_REPOSITORY" \
+              --auto \
+              --merge \
+              --delete-branch
+
+            exit 0
+          fi
+
+          if git ls-remote --exit-code \
+            --heads origin "$RELEASE_BRANCH" >/dev/null 2>&1
+          then
+            echo "Remote branch ${RELEASE_BRANCH} already exists without an open PR."
+            exit 1
+          fi
+
+          git switch --create "$RELEASE_BRANCH"
+
+          git add Cargo.lock CHANGELOG.md product/Cargo.toml libraries/common/Cargo.toml tools/generate-routing/Cargo.toml
+
+          if git diff --cached --quiet; then
+            echo "No release metadata changes were generated."
+            exit 1
+          fi
+
+          git commit -m "chore: prepare ${RELEASE_TAG}"
+          git push origin "$RELEASE_BRANCH"
+
+          PR_URL="$(
+            gh pr create \
+              --repo "$GITHUB_REPOSITORY" \
+              --base main \
+              --head "$RELEASE_BRANCH" \
+              --title "Prepare ${RELEASE_TAG}" \
+              --body "Updates the workspace versions and CHANGELOG.md for ${RELEASE_TAG}."
+          )"
+
+          PR_NUMBER="${PR_URL##*/}"
+
+          gh pr merge "$PR_NUMBER" \
+            --repo "$GITHUB_REPOSITORY" \
+            --auto \
+            --merge \
+            --delete-branch

@@ -22,16 +22,14 @@ jobs:
         with:
           components: rustfmt, clippy
       - run: cargo run --locked -p generate-routing
+      - name: Check routing.bin is up to date
+        run: git diff --exit-code -- product/data/routing.bin
       - run: cargo fmt --all -- --check
-      - run: cargo clippy --locked -p common --all-targets --all-features -- -D warnings
+      - run: cargo clippy --locked -p standardizer-common --all-targets --all-features -- -D warnings
       - run: cargo clippy --locked -p generate-routing --all-targets -- -D warnings
       - run: cargo clippy --locked -p standardizer --all-targets -- -D warnings
-      - run: cargo clippy --locked -p standardizer --all-targets --no-default-features --features embedded-routing -- -D warnings
-      - run: cargo test --locked -p common --all-features
+      - run: cargo clippy --locked -p standardizer --all-targets --no-default-features --features routing-source -- -D warnings
+      - run: cargo test --locked -p standardizer-common --all-features
       - run: cargo test --locked -p generate-routing
       - run: cargo test --locked -p standardizer
-      - uses: actions/upload-artifact@v4
-        with:
-          name: routing-data
-          path: data/standardizer/routing.bin
-          if-no-files-found: error
+      - run: cargo publish --dry-run --locked --allow-dirty -p standardizer-common -p standardizer

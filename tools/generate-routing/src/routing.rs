@@ -27,11 +27,11 @@ pub(crate) fn generate() -> Result<(), Box<dyn Error>> {
         .parent()
         .and_then(Path::parent)
         .ok_or("generate-routing must be located under tools/generate-routing")?;
-    let source = fs::read_to_string(root.join("data/standardizer/routing.ron"))?;
+    let source = fs::read_to_string(root.join("product/data/routing.ron"))?;
     let routing: Routing = ron::from_str(&source)?;
 
     routing.validate()?;
     let encoded = encode_to_vec(&routing, config::standard())?;
-    fs::write(root.join("data/standardizer/routing.bin"), encoded)?;
+    fs::write(root.join("product/data/routing.bin"), encoded)?;
     Ok(())
 }
