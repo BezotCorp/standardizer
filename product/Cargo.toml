@@ -1,0 +1,16 @@
+[package]
+name = "standardizer"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+default = ["routing-source"]
+routing-source = ["dep:ron", "dep:serde", "common/source"]
+embedded-routing = []
+
+[dependencies]
+bincode-next = "3"
+common = { path = "../libraries/common", features = ["decode"] }
+ron = { version = "0.12", optional = true }
+serde = { version = "1", features = ["derive"], optional = true }
+serde_json = "1"

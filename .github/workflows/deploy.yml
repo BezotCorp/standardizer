@@ -1,0 +1,84 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  build:
+    if: github.event.workflow_run.conclusion == 'success'
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-14
+            target: aarch64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: routing-data
+          path: data/standardizer
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - run: cargo build --release --locked -p standardizer --target ${{ matrix.target }} --no-default-features --features embedded-routing
+      - name: Package
+        shell: bash
+        run: |
+          mkdir package
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            cp "target/${{ matrix.target }}/release/standardizer.exe" package/
+          else
+            cp "target/${{ matrix.target }}/release/standardizer" package/
+          fi
+          cp README.md package/
+          tar -czf "standardizer-${{ matrix.target }}.tar.gz" -C package .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: standardizer-${{ matrix.target }}
+          path: standardizer-${{ matrix.target }}.tar.gz
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Read product version
+        id: version
+        shell: bash
+        run: |
+          version="$(cargo metadata --locked --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "standardizer") | .version')"
+          echo "tag=v${version}" >> "$GITHUB_OUTPUT"
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: gh release create "$RELEASE_TAG" artifacts/*.tar.gz --target "$RELEASE_SHA" --generate-notes
