@@ -21,6 +21,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+      - name: Validate changelog version
+        shell: bash
+        run: |
+          version="$(cargo metadata --locked --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "standardizer") | .version')"
+          grep --fixed-strings "## [${version}]" CHANGELOG.md
       - run: cargo run --locked -p generate-routing
       - run: cargo fmt --all -- --check
       - run: cargo clippy --locked -p common --all-targets --all-features -- -D warnings
