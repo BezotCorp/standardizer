@@ -54,7 +54,10 @@ esac
 
 printf 'current_version_publication_state=%s\n' "$PUBLICATION_STATE" >>"$OUTPUT_FILE"
 
-pnpm exec semantic-release --dry-run
+# Triggered by a merged pull request, semantic-release would otherwise run in
+# pull request mode and refuse to select a version. The checkout is the tip of
+# main, so tell it so.
+GITHUB_EVENT_NAME=push GITHUB_REF=refs/heads/main pnpm exec semantic-release --dry-run
 
 NEXT_VERSION="$(
   sed -n 's/^next_version=//p' "$OUTPUT_FILE" |

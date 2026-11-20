@@ -16,7 +16,8 @@ trap 'rm -rf "$RELEASE_DATA_DIRECTORY"' EXIT
 
 export RELEASE_NOTES_FILE="$RELEASE_DATA_DIRECTORY/notes"
 
-node scripts/prepare-release-version.mjs "$NEW_VERSION"
+# See check-release-state.sh: run semantic-release as if on the tip of main.
+GITHUB_EVENT_NAME=push GITHUB_REF=refs/heads/main node scripts/prepare-release-version.mjs "$NEW_VERSION"
 semantic-release-cargo prepare "$NEW_VERSION"
 cargo update --workspace
 
