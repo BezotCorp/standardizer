@@ -1,6 +1,6 @@
 [package]
 name = "generate-routing"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2024"
 publish = false
 
@@ -9,6 +9,6 @@ bincode-next = "3"
 common = { package = "standardizer-common", path = "../../libraries/common", features = [
   "encode",
   "source",
-] }
+] , version = "1.0.0" }
 ron = "0.12"
 serde = { version = "1", features = ["derive"] }
