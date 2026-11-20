@@ -1,6 +1,6 @@
 [package]
 name = "standardizer"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2024"
 description = "Check or fix the conformance of files in a Git repository by dispatching them to rustfmt or Biome"
 license = "Apache-2.0"
@@ -17,7 +17,7 @@ embedded-routing = []
 
 [dependencies]
 bincode-next = "3"
-common = { package = "standardizer-common", version = "1.0.0", path = "../libraries/common", features = [
+common = { package = "standardizer-common", version = "1.0.1", path = "../libraries/common", features = [
   "decode",
 ] }
 ron = { version = "0.12", optional = true }
