@@ -4,20 +4,29 @@ use std::{error::Error, path::Path, process::Command};
 pub(crate) struct Rustfmt;
 
 impl Rustfmt {
-    pub(crate) fn verify(root: &Path) -> Result<(), Box<dyn Error>> {
-        let status = Command::new("rustfmt")
+    pub(crate) fn verify(root: &Path) -> Result<bool, Box<dyn Error>> {
+        let output = match Command::new("rustfmt")
             .current_dir(root)
             .arg("--version")
             .output()
-            .map_err(|error| format!("impossible de lancer rustfmt : {error} ; vérifiez la toolchain active (avec rustup : rustup component add rustfmt)"))?;
-        if !status.status.success() {
+        {
+            Ok(output) => output,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                eprintln!("standardizer: rustfmt absent, fichiers correspondants ignorés");
+                return Ok(false);
+            }
+            Err(error) => return Err(error.into()),
+        };
+
+        if !output.status.success() {
             return Err(format!(
-                "rustfmt indisponible pour la toolchain active : {}",
-                String::from_utf8_lossy(&status.stderr).trim()
+                "rustfmt indisponible : {}",
+                String::from_utf8_lossy(&output.stderr).trim()
             )
             .into());
         }
-        Ok(())
+
+        Ok(true)
     }
 
     pub(crate) fn execute(

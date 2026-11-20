@@ -22,11 +22,12 @@ impl Conformance {
             }
         }
 
-        if batches.contains_key(&Tool::Rustfmt) {
-            Rustfmt::verify(root)?;
+        if batches.contains_key(&Tool::Rustfmt) && !Rustfmt::verify(root)? {
+            batches.remove(&Tool::Rustfmt);
         }
-        if batches.contains_key(&Tool::Biome) {
-            Biome::verify(root)?;
+
+        if batches.contains_key(&Tool::Biome) && !Biome::verify(root)? {
+            batches.remove(&Tool::Biome);
         }
 
         let mut passed = true;
