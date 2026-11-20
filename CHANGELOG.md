@@ -6,12 +6,6 @@
 
 * continue formatting when optional tools are unavailable ([3bf4cad](https://github.com/BezotCorp/standardizer/commit/3bf4cad72655769cea1af806a92ee4953667e6ca))
 
-## [1.0.1](https://github.com/BezotCorp/standardizer/compare/1.0.0...1.0.1) (2026-11-20)
-
-### Bug Fixes
-
-* continue formatting when optional tools are unavailable ([3bf4cad](https://github.com/BezotCorp/standardizer/commit/3bf4cad72655769cea1af806a92ee4953667e6ca))
-
 ## 1.0.0 (2026-11-20)
 
 ### Features
