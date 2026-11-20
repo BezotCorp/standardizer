@@ -35,7 +35,7 @@ dependencies = [
 
 [[package]]
 name = "generate-routing"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "bincode-next",
  "ron",
@@ -63,7 +63,7 @@ checksum = "2ee67f1008b1ba2321834326597b8e186293b049a023cdef258527550b9935b4"
 
 [[package]]
 name = "prepare-test-repository"
-version = "1.0.0"
+version = "1.0.1"
 
 [[package]]
 name = "proc-macro2"
@@ -156,7 +156,7 @@ dependencies = [
 
 [[package]]
 name = "standardizer"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "bincode-next",
  "ron",
@@ -167,7 +167,7 @@ dependencies = [
 
 [[package]]
 name = "standardizer-common"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "bincode-next",
  "serde",
