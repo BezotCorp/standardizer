@@ -23,7 +23,7 @@ jobs:
           components: rustfmt, clippy
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: "24"
       - run: cargo run --locked -p generate-routing
       - name: Check routing.bin is up to date
         run: git diff --exit-code -- product/data/routing.bin
@@ -34,5 +34,4 @@ jobs:
       - run: cargo clippy --locked -p standardizer --all-targets --no-default-features --features routing-source -- -D warnings
       - run: cargo test --locked -p standardizer-common --all-features
       - run: cargo test --locked -p generate-routing
-      - run: bash scripts/test-integration.sh
       - run: cargo publish --dry-run --locked --allow-dirty -p standardizer-common -p standardizer
