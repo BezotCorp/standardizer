@@ -35,7 +35,7 @@ dependencies = [
 
 [[package]]
 name = "generate-routing"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "bincode-next",
  "ron",
@@ -152,7 +152,7 @@ dependencies = [
 
 [[package]]
 name = "standardizer"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "bincode-next",
  "ron",
@@ -163,7 +163,7 @@ dependencies = [
 
 [[package]]
 name = "standardizer-common"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "bincode-next",
  "serde",
