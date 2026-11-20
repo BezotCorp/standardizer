@@ -40,16 +40,16 @@ PUBLICATION_STATE="$(
 )"
 
 case "$PUBLICATION_STATE" in
-  complete)
-    printf 'current_version_published=true\n' >>"$OUTPUT_FILE"
-    ;;
-  partial | absent)
-    printf 'current_version_published=false\n' >>"$OUTPUT_FILE"
-    ;;
-  *)
-    echo "invalid publication state: $PUBLICATION_STATE" >&2
-    exit 3
-    ;;
+complete)
+  printf 'current_version_published=true\n' >>"$OUTPUT_FILE"
+  ;;
+partial | absent)
+  printf 'current_version_published=false\n' >>"$OUTPUT_FILE"
+  ;;
+*)
+  echo "invalid publication state: $PUBLICATION_STATE" >&2
+  exit 3
+  ;;
 esac
 
 printf 'current_version_publication_state=%s\n' "$PUBLICATION_STATE" >>"$OUTPUT_FILE"
@@ -61,6 +61,15 @@ NEXT_VERSION="$(
     tail -n 1
 )"
 
+VERSION_PREPARED=false
+if [ -n "$NEXT_VERSION" ] &&
+  [ "$NEXT_VERSION" = "$CURRENT_VERSION" ] &&
+  grep -Eq "^## \[?${CURRENT_VERSION//./\\.}\]?( |\$)" CHANGELOG.md; then
+  echo "Version $CURRENT_VERSION is already prepared (declared and present in CHANGELOG.md): no new bump."
+  VERSION_PREPARED=true
+  NEXT_VERSION=""
+fi
+
 if [ -n "$NEXT_VERSION" ]; then
   printf 'has_new_version=true\n' >>"$OUTPUT_FILE"
 
@@ -69,7 +78,16 @@ else
   printf 'has_new_version=false\n' >>"$OUTPUT_FILE"
   printf 'next_version=\n' >>"$OUTPUT_FILE"
 
-  if [ "$PUBLICATION_STATE" = absent ]; then
+  if [ "$VERSION_PREPARED" = true ] && [ "$PUBLICATION_STATE" = absent ]; then
+    # Prepared by a release but never published: recoverable, publish it as is.
+    printf 'current_version_publication_state=partial\n' >>"$OUTPUT_FILE"
+  elif [ "$PUBLICATION_STATE" = absent ] &&
+    git ls-remote --exit-code --tags origin "refs/tags/$CURRENT_VERSION" >/dev/null 2>&1; then
+    # The tag is the last step of a publication: a tag without any published
+    # artifact is an incident. Finish the publication without recreating the tag.
+    echo "::warning::Tag $CURRENT_VERSION exists but the version is not published: recovering the publication without recreating the tag."
+    printf 'current_version_publication_state=partial\n' >>"$OUTPUT_FILE"
+  elif [ "$PUBLICATION_STATE" = absent ]; then
     echo "::error::Version $CURRENT_VERSION is absent from crates.io and GitHub, but no prepared release version exists. Refusing direct publication."
     exit 1
   fi

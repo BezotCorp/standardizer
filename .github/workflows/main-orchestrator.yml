@@ -1,9 +1,11 @@
 name: Main Orchestrator
 
 on:
-  push:
+  pull_request_target:
     branches:
       - main
+    types:
+      - closed
 
 concurrency:
   group: main-orchestrator-${{ github.ref }}
@@ -15,6 +17,9 @@ permissions:
 
 jobs:
   check:
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.ref != 'release/pending'
     uses: ./.github/workflows/worker-check.yml
     secrets: inherit
 

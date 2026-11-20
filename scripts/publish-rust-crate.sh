@@ -104,9 +104,14 @@ if [ "$GITHUB_RELEASE_PUBLISHED" = false ]; then
     done
   fi
 
-  ./scripts/read-changelog-release.sh \
-    CHANGELOG.md \
-    "$RELEASE_VERSION" |
+  RELEASE_NOTES="$(
+    ./scripts/read-changelog-release.sh \
+      CHANGELOG.md \
+      "$RELEASE_VERSION" ||
+      printf 'Release %s\n' "$RELEASE_VERSION"
+  )"
+
+  printf '%s\n' "$RELEASE_NOTES" |
     gh release create "$RELEASE_VERSION" \
       --repo "$REPOSITORY" \
       --title "$RELEASE_VERSION" \
