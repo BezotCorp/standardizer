@@ -1,4 +1,4 @@
 [workspace]
 resolver = "3"
-members = ["libraries/common", "product", "tools/generate-routing"]
+members = ["libraries/common", "product", "tools/generate-routing", "tools/prepare-test-repository"]
 default-members = ["product"]

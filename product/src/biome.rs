@@ -14,12 +14,20 @@ impl Biome {
         }
     }
 
-    pub(crate) fn verify(root: &Path) -> Result<(), Box<dyn Error>> {
-        let output = Command::new(Self::executable(root))
+    pub(crate) fn verify(root: &Path) -> Result<bool, Box<dyn Error>> {
+        let output = match Command::new(Self::executable(root))
             .current_dir(root)
             .arg("--version")
             .output()
-            .map_err(|error| format!("impossible de lancer biome : {error} ; installez Biome ou rendez-le accessible dans PATH"))?;
+        {
+            Ok(output) => output,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                eprintln!("standardizer: biome absent, fichiers correspondants ignorés");
+                return Ok(false);
+            }
+            Err(error) => return Err(error.into()),
+        };
+
         if !output.status.success() {
             return Err(format!(
                 "biome indisponible : {}",
@@ -27,7 +35,8 @@ impl Biome {
             )
             .into());
         }
-        Ok(())
+
+        Ok(true)
     }
 
     pub(crate) fn execute(
