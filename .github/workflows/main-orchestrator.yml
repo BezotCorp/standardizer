@@ -1,9 +1,11 @@
 name: Main Orchestrator
 
 on:
-  push:
+  pull_request_target:
     branches:
       - main
+    types:
+      - closed
 
 concurrency:
   group: main-orchestrator-${{ github.ref }}
@@ -15,6 +17,9 @@ permissions:
 
 jobs:
   check:
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.ref != 'release/pending'
     uses: ./.github/workflows/worker-check.yml
     secrets: inherit
 
@@ -28,13 +33,13 @@ jobs:
 
   sync-only:
     needs: [check, version]
-    if: always() && needs.check.outputs.has_new_version == 'false' && needs.check.outputs.current_version_published == 'true'
+    if: always() && needs.check.outputs.has_new_version == 'false' && needs.check.outputs.current_version_publication_state == 'complete'
     uses: ./.github/workflows/worker-sync.yml
     secrets: inherit
 
   publish-existing:
     needs: check
-    if: needs.check.outputs.has_new_version == 'false' && needs.check.outputs.current_version_published == 'false'
+    if: needs.check.outputs.has_new_version == 'false' && needs.check.outputs.current_version_publication_state == 'partial'
     uses: ./.github/workflows/worker-publish.yml
     secrets: inherit
     with:

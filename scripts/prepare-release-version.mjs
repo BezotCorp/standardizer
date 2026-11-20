@@ -41,6 +41,7 @@ if (result.nextRelease.version !== expectedVersion) {
 await changelog.prepare(
   {
     changelogFile: "CHANGELOG.md",
+    changelogTitle: "# Changelog",
   },
   {
     cwd: process.cwd(),
