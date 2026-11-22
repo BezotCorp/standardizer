@@ -1,0 +1,25 @@
+[package]
+name = "standardizer"
+version = "1.0.1"
+edition = "2024"
+description = "Check or fix the conformance of files in a Git repository by dispatching them to rustfmt or Biome"
+license = "Apache-2.0"
+repository = "https://github.com/BezotCorp/standardizer"
+readme = "README.md"
+keywords = ["formatter", "git", "rustfmt", "biome", "cli"]
+categories = ["command-line-utilities", "development-tools"]
+include = ["src/**", "LICENSE", "data/routing.bin", "data/routing.ron"]
+
+[features]
+default = ["embedded-routing"]
+routing-source = ["dep:ron", "dep:serde", "common/source"]
+embedded-routing = []
+
+[dependencies]
+bincode-next = "3"
+common = { package = "standardizer-common", version = "1.1.0", features = [
+  "decode",
+] }
+ron = { version = "0.12", optional = true }
+serde = { version = "1", features = ["derive"], optional = true }
+serde_json = "1"
