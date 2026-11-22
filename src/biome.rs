@@ -1,42 +1,60 @@
-use crate::conformance_intent::ConformanceIntent;
-use std::{error::Error, ffi::OsString, path::Path, process::Command};
+use crate::{
+    conformance_intent::ConformanceIntent,
+    tool_id::ToolId,
+    tool_manager::ToolManager,
+};
+use std::{
+    error::Error,
+    io::{self, IsTerminal, Write},
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 pub(crate) struct Biome;
 
 impl Biome {
-    fn executable(root: &Path) -> OsString {
-        let binary = if cfg!(windows) { "biome.cmd" } else { "biome" };
-        let local = root.join("node_modules/.bin").join(binary);
-        if local.is_file() {
-            local.into_os_string()
-        } else {
-            OsString::from(binary)
-        }
-    }
-
     pub(crate) fn verify(root: &Path) -> Result<bool, Box<dyn Error>> {
-        let output = match Command::new(Self::executable(root))
-            .current_dir(root)
-            .arg("--version")
-            .output()
-        {
-            Ok(output) => output,
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-                eprintln!("standardizer: biome absent, fichiers correspondants ignorés");
-                return Ok(false);
-            }
-            Err(error) => return Err(error.into()),
-        };
-
-        if !output.status.success() {
-            return Err(format!(
-                "biome indisponible : {}",
-                String::from_utf8_lossy(&output.stderr).trim()
-            )
-            .into());
+        if let Some(executable) = Self::executable(root)? {
+            return Self::verify_executable(&executable);
         }
 
-        Ok(true)
+        eprintln!(
+            "standardizer: biome absent, fichiers correspondants ignorés"
+        );
+
+        if io::stdin().is_terminal() && io::stdout().is_terminal() {
+            print!(
+                "Installer Biome avec Standardizer maintenant ? [y/N] "
+            );
+            io::stdout().flush()?;
+
+            let mut answer = String::new();
+            io::stdin().read_line(&mut answer)?;
+
+            let accepted = matches!(
+                answer.trim().to_ascii_lowercase().as_str(),
+                "y" | "yes" | "o" | "oui"
+            );
+
+            if accepted {
+                let executable = ToolManager::install(ToolId::Biome)?;
+
+                if Self::verify_executable(&executable)? {
+                    return Ok(true);
+                }
+
+                return Err(
+                    "Biome was installed but could not be verified".into()
+                );
+            }
+        } else {
+            eprintln!(
+                "standardizer: CI/non-interactif : \
+                 `standardizer tools install biome`"
+            );
+        }
+
+        Ok(false)
     }
 
     pub(crate) fn execute(
@@ -48,7 +66,8 @@ impl Biome {
             return Ok(true);
         }
 
-        let executable = Self::executable(root);
+        let executable = Self::executable(root)?
+            .ok_or("Biome is required but unavailable")?;
 
         let mut passed = true;
 
@@ -73,5 +92,39 @@ impl Biome {
         }
 
         Ok(passed)
+    }
+
+    fn executable(
+        root: &Path,
+    ) -> Result<Option<PathBuf>, Box<dyn Error>> {
+        Ok(
+            ToolManager::resolve(ToolId::Biome, Some(root))?
+                .map(|tool| tool.path().to_path_buf()),
+        )
+    }
+
+    fn verify_executable(
+        executable: &Path,
+    ) -> Result<bool, Box<dyn Error>> {
+        let output = match Command::new(executable)
+            .arg("--version")
+            .output()
+        {
+            Ok(output) => output,
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {
+                return Ok(false);
+            }
+            Err(error) => return Err(error.into()),
+        };
+
+        if !output.status.success() {
+            return Err(format!(
+                "biome indisponible : {}",
+                String::from_utf8_lossy(&output.stderr).trim()
+            )
+            .into());
+        }
+
+        Ok(true)
     }
 }
