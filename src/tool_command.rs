@@ -4,7 +4,11 @@ use crate::{
     tool_manager::ToolManager,
     tools_gui::ToolsGui,
 };
-use std::{env, error::Error, ffi::OsString};
+use std::{
+    env,
+    error::Error,
+    ffi::OsString,
+};
 
 pub(crate) struct ToolCommand;
 
@@ -14,91 +18,147 @@ impl ToolCommand {
     ) -> Result<(), Box<dyn Error>> {
         let command = arguments
             .next()
-            .and_then(|value| value.into_string().ok());
+            .and_then(
+                |value| value.into_string().ok(),
+            );
 
         match command.as_deref() {
             None | Some("ui") => {
                 Self::require_no_more(arguments)?;
-                ToolsGui::run(env::current_dir().ok())
+
+                ToolsGui::run(
+                    env::current_dir().ok(),
+                )
             }
+
             Some("status") => {
                 Self::require_no_more(arguments)?;
                 Self::status()
             }
+
             Some("install") => {
-                let tool = Self::tool(&mut arguments)?;
+                let tool =
+                    Self::tool(&mut arguments)?;
+
                 Self::require_no_more(arguments)?;
 
-                let path = ToolManager::install(tool)?;
+                let path =
+                    ToolManager::install(tool)?;
 
                 println!(
                     "{} {} installed at {}",
                     tool.display_name(),
-                    BiomeInstallation::VERSION,
-                    path.display()
+                    Self::managed_version(tool),
+                    path.display(),
                 );
 
                 Ok(())
             }
+
             Some("uninstall") => {
-                let tool = Self::tool(&mut arguments)?;
+                let tool =
+                    Self::tool(&mut arguments)?;
+
                 Self::require_no_more(arguments)?;
 
                 if ToolManager::uninstall(tool)? {
                     println!(
                         "{} managed installation removed",
-                        tool.display_name()
+                        tool.display_name(),
                     );
                 } else {
                     println!(
                         "{} has no Standardizer-managed installation",
-                        tool.display_name()
+                        tool.display_name(),
                     );
                 }
 
                 Ok(())
             }
+
             _ => Err(Self::usage().into()),
         }
     }
 
     fn status() -> Result<(), Box<dyn Error>> {
         let root = env::current_dir().ok();
-        let status =
-            ToolManager::status(ToolId::Biome, root.as_deref())?;
 
-        println!("Biome");
+        for (index, tool) in
+            ToolId::ALL.iter().copied().enumerate()
+        {
+            if index > 0 {
+                println!();
+            }
 
-        match status.active() {
-            Some(tool) => {
-                println!("  status: available");
-                println!("  source: {}", tool.source().label());
-                println!("  path: {}", tool.path().display());
+            let status =
+                ToolManager::status(
+                    tool,
+                    root.as_deref(),
+                )?;
 
-                if let Some(version) = status.active_version() {
-                    println!("  version: {version}");
+            println!(
+                "{} ({})",
+                status.tool().display_name(),
+                status.tool().name(),
+            );
+
+            match status.active() {
+                Some(active) => {
+                    println!(
+                        "  status: available"
+                    );
+
+                    println!(
+                        "  source: {}",
+                        active.source().label(),
+                    );
+
+                    println!(
+                        "  path: {}",
+                        active.path().display(),
+                    );
+
+                    println!(
+                        "  version: {}",
+                        active.version(),
+                    );
+                }
+
+                None => {
+                    println!(
+                        "  status: unavailable"
+                    );
                 }
             }
-            None => {
-                println!("  status: unavailable");
-            }
+
+            println!(
+                "  managed: {}",
+                if status.managed_installed() {
+                    "installed"
+                } else {
+                    "not installed"
+                },
+            );
+
+            println!(
+                "  managed path: {}",
+                status
+                    .managed_path()
+                    .display(),
+            );
         }
 
-        println!(
-            "  managed: {}",
-            if status.managed_installed() {
-                "installed"
-            } else {
-                "not installed"
-            }
-        );
-
-        println!(
-            "  managed path: {}",
-            status.managed_path().display()
-        );
-
         Ok(())
+    }
+
+    fn managed_version(
+        tool: ToolId,
+    ) -> &'static str {
+        match tool {
+            ToolId::Biome => {
+                BiomeInstallation::VERSION
+            }
+        }
     }
 
     fn tool(
@@ -106,11 +166,20 @@ impl ToolCommand {
     ) -> Result<ToolId, Box<dyn Error>> {
         let name = arguments
             .next()
-            .and_then(|value| value.into_string().ok())
+            .and_then(
+                |value| value.into_string().ok(),
+            )
             .ok_or_else(Self::usage)?;
 
         ToolId::from_name(&name)
-            .ok_or_else(|| format!("unknown tool: {name}").into())
+            .ok_or_else(
+                || {
+                    format!(
+                        "unknown tool: {name}",
+                    )
+                    .into()
+                },
+            )
     }
 
     fn require_no_more(

@@ -17,7 +17,7 @@ mod tools_gui;
 mod tracked_file;
 
 use conformance_pipeline::ConformancePipeline;
-use std::{env, error::Error, process::ExitCode};
+use std::{env, error::Error, process::ExitCode, iter};
 use tool_command::ToolCommand;
 
 fn main() -> ExitCode {
@@ -39,9 +39,9 @@ fn run() -> Result<(), Box<dyn Error>> {
         }
         Some(command) => {
             ConformancePipeline::run(
-                std::iter::once(command).chain(arguments),
+                iter::once(command).chain(arguments),
             )
         }
-        None => ConformancePipeline::run(std::iter::empty()),
+        None => ConformancePipeline::run(iter::empty()),
     }
 }

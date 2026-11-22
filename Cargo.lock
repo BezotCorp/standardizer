@@ -2855,6 +2855,7 @@ dependencies = [
  "eframe",
  "reqwest",
  "ron",
+ "semver",
  "serde",
  "serde_json",
  "standardizer-common",

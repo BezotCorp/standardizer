@@ -4,6 +4,10 @@ pub(crate) enum ToolId {
 }
 
 impl ToolId {
+    pub(crate) const ALL: [Self; 1] = [
+        Self::Biome,
+    ];
+
     pub(crate) fn from_name(name: &str) -> Option<Self> {
         match name {
             "biome" => Some(Self::Biome),

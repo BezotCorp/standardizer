@@ -1,4 +1,5 @@
 use crate::{
+    biome_installation::BiomeInstallation,
     conformance_intent::ConformanceIntent,
     tool_id::ToolId,
     tool_manager::ToolManager,
@@ -13,38 +14,64 @@ use std::{
 pub(crate) struct Biome;
 
 impl Biome {
-    pub(crate) fn verify(root: &Path) -> Result<bool, Box<dyn Error>> {
-        if let Some(executable) = Self::executable(root)? {
-            return Self::verify_executable(&executable);
+    pub(crate) fn verify(
+        root: &Path,
+    ) -> Result<bool, Box<dyn Error>> {
+        if let Some(executable) =
+            Self::executable(root)?
+        {
+            return Self::verify_executable(
+                &executable,
+            );
         }
 
         eprintln!(
-            "standardizer: biome absent, fichiers correspondants ignorés"
+            "standardizer: aucune version compatible de Biome trouvée"
         );
 
-        if io::stdin().is_terminal() && io::stdout().is_terminal() {
+        eprintln!(
+            "standardizer: Biome >= {} requis",
+            BiomeInstallation::MINIMUM_VERSION,
+        );
+
+        if io::stdin().is_terminal()
+            && io::stdout().is_terminal()
+        {
             print!(
-                "Installer Biome avec Standardizer maintenant ? [y/N] "
+                "Installer Biome {} avec Standardizer maintenant ? [y/N] ",
+                BiomeInstallation::VERSION,
             );
+
             io::stdout().flush()?;
 
             let mut answer = String::new();
-            io::stdin().read_line(&mut answer)?;
+
+            io::stdin()
+                .read_line(&mut answer)?;
 
             let accepted = matches!(
-                answer.trim().to_ascii_lowercase().as_str(),
-                "y" | "yes" | "o" | "oui"
+                answer
+                    .trim()
+                    .to_ascii_lowercase()
+                    .as_str(),
+                "y" | "yes" | "o" | "oui",
             );
 
             if accepted {
-                let executable = ToolManager::install(ToolId::Biome)?;
+                let executable =
+                    ToolManager::install(
+                        ToolId::Biome,
+                    )?;
 
-                if Self::verify_executable(&executable)? {
+                if Self::verify_executable(
+                    &executable,
+                )? {
                     return Ok(true);
                 }
 
                 return Err(
-                    "Biome was installed but could not be verified".into()
+                    "Biome was installed but could not be verified"
+                        .into(),
                 );
             }
         } else {
@@ -66,27 +93,39 @@ impl Biome {
             return Ok(true);
         }
 
-        let executable = Self::executable(root)?
-            .ok_or("Biome is required but unavailable")?;
+        let executable =
+            Self::executable(root)?
+                .ok_or(
+                    "compatible Biome is required but unavailable",
+                )?;
 
         let mut passed = true;
 
         for chunk in files.chunks(64) {
-            let mut command = Command::new(&executable);
+            let mut command =
+                Command::new(&executable);
 
-            command.current_dir(root).args([
-                "check",
-                "--files-ignore-unknown=true",
-                "--no-errors-on-unmatched",
-            ]);
+            command
+                .current_dir(root)
+                .args([
+                    "check",
+                    "--files-ignore-unknown=true",
+                    "--no-errors-on-unmatched",
+                ]);
 
-            if intent == ConformanceIntent::FixConformance {
+            if intent
+                == ConformanceIntent::FixConformance
+            {
                 command.arg("--write");
             }
 
             passed &= command
                 .arg("--")
-                .args(chunk.iter().map(|path| root.join(path)))
+                .args(
+                    chunk
+                        .iter()
+                        .map(|path| root.join(path)),
+                )
                 .status()?
                 .success();
         }
@@ -98,33 +137,23 @@ impl Biome {
         root: &Path,
     ) -> Result<Option<PathBuf>, Box<dyn Error>> {
         Ok(
-            ToolManager::resolve(ToolId::Biome, Some(root))?
-                .map(|tool| tool.path().to_path_buf()),
+            ToolManager::resolve(
+                ToolId::Biome,
+                Some(root),
+            )?
+            .map(
+                |tool| {
+                    tool.path().to_path_buf()
+                },
+            ),
         )
     }
 
     fn verify_executable(
         executable: &Path,
     ) -> Result<bool, Box<dyn Error>> {
-        let output = match Command::new(executable)
-            .arg("--version")
-            .output()
-        {
-            Ok(output) => output,
-            Err(error) if error.kind() == io::ErrorKind::NotFound => {
-                return Ok(false);
-            }
-            Err(error) => return Err(error.into()),
-        };
-
-        if !output.status.success() {
-            return Err(format!(
-                "biome indisponible : {}",
-                String::from_utf8_lossy(&output.stderr).trim()
-            )
-            .into());
-        }
-
-        Ok(true)
+        BiomeInstallation::is_compatible(
+            executable,
+        )
     }
 }
