@@ -2,7 +2,7 @@ use crate::{
     biome::Biome, conformance_intent::ConformanceIntent, routing::Routing, rustfmt::Rustfmt,
     tracked_file::TrackedFile,
 };
-use common::tool::Tool;
+use standardizer_common::tools::Tool;
 use std::{collections::BTreeMap, error::Error, path::Path};
 
 pub(crate) struct Conformance;

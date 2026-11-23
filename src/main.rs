@@ -10,7 +10,6 @@ mod routing;
 mod rustfmt;
 mod tool_command;
 mod tool_configuration;
-mod tool_id;
 mod tool_manager;
 mod tool_source;
 mod tool_status;
@@ -18,7 +17,7 @@ mod tools_gui;
 mod tracked_file;
 
 use conformance_pipeline::ConformancePipeline;
-use std::{env, error::Error, process::ExitCode, iter};
+use std::{env, error::Error, iter, process::ExitCode};
 use tool_command::ToolCommand;
 
 fn main() -> ExitCode {
@@ -35,14 +34,8 @@ fn run() -> Result<(), Box<dyn Error>> {
     let mut arguments = env::args_os().skip(1);
 
     match arguments.next() {
-        Some(command) if command.to_str() == Some("tools") => {
-            ToolCommand::run(arguments)
-        }
-        Some(command) => {
-            ConformancePipeline::run(
-                iter::once(command).chain(arguments),
-            )
-        }
+        Some(command) if command.to_str() == Some("tools") => ToolCommand::run(arguments),
+        Some(command) => ConformancePipeline::run(iter::once(command).chain(arguments)),
         None => ConformancePipeline::run(iter::empty()),
     }
 }

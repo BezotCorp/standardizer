@@ -1,7 +1,5 @@
-use crate::{
-    resolved_tool::ResolvedTool,
-    tool_id::ToolId,
-};
+use crate::resolved_tool::ResolvedTool;
+use standardizer_common::tools::Tool;
 use std::path::PathBuf;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -31,7 +29,7 @@ impl ManagedToolState {
 
 #[derive(Clone, Debug)]
 pub(crate) struct ToolStatus {
-    tool: ToolId,
+    tool: Tool,
     active: Option<ResolvedTool>,
     managed_path: PathBuf,
     managed_state: ManagedToolState,
@@ -39,7 +37,7 @@ pub(crate) struct ToolStatus {
 
 impl ToolStatus {
     pub(crate) fn new(
-        tool: ToolId,
+        tool: Tool,
         active: Option<ResolvedTool>,
         managed_path: PathBuf,
         managed_state: ManagedToolState,
@@ -52,7 +50,7 @@ impl ToolStatus {
         }
     }
 
-    pub(crate) fn tool(&self) -> ToolId {
+    pub(crate) fn tool(&self) -> Tool {
         self.tool
     }
 
@@ -61,9 +59,7 @@ impl ToolStatus {
     }
 
     pub(crate) fn active_version(&self) -> Option<String> {
-        self.active
-            .as_ref()
-            .map(|tool| tool.version().to_string())
+        self.active.as_ref().map(|tool| tool.version().to_string())
     }
 
     pub(crate) fn managed_path(&self) -> &std::path::Path {

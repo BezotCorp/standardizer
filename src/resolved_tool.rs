@@ -10,11 +10,7 @@ pub(crate) struct ResolvedTool {
 }
 
 impl ResolvedTool {
-    pub(crate) fn new(
-        path: PathBuf,
-        source: ToolSource,
-        version: Version,
-    ) -> Self {
+    pub(crate) fn new(path: PathBuf, source: ToolSource, version: Version) -> Self {
         Self {
             path,
             source,
