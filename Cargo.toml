@@ -44,7 +44,7 @@ eframe = { version = "0.37", default-features = false, features = [
   "x11",
 ] }
 bincode-next = "3"
-standardizer-common = { version = "2", features = ["decode"] }
+standardizer-common = { version = "2", path = "../libraries/common", features = ["decode"] }
 ron = { version = "0.12", optional = true }
 serde = { version = "1", features = ["derive"], optional = true }
 serde_json = "1"
