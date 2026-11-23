@@ -1,0 +1,9 @@
+(
+    tools: [
+        (
+            id: Biome,
+            minimum_version: "2.6.0",
+            managed_version: "2.6.8",
+        ),
+    ],
+)

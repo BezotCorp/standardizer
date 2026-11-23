@@ -1,3 +1,7 @@
+use crate::{
+    tool_configuration::ToolConfiguration,
+    tool_id::ToolId,
+};
 use reqwest::blocking::Client;
 use semver::Version;
 use std::{
@@ -12,18 +16,38 @@ use std::{
 pub(crate) struct BiomeInstallation;
 
 impl BiomeInstallation {
-    pub(crate) const VERSION: &'static str = "2.6.8";
-    pub(crate) const MINIMUM_VERSION: &'static str = "2.6.0";
+    pub(crate) fn minimum_version(
+    ) -> Result<Version, Box<dyn Error>> {
+        let configuration =
+            ToolConfiguration::load()?;
 
-    pub(crate) fn managed_path() -> Result<PathBuf, Box<dyn Error>> {
+        configuration
+            .definition(ToolId::Biome)?
+            .minimum_version()
+    }
+
+    pub(crate) fn managed_version(
+    ) -> Result<Version, Box<dyn Error>> {
+        let configuration =
+            ToolConfiguration::load()?;
+
+        configuration
+            .definition(ToolId::Biome)?
+            .managed_version()
+    }
+
+    pub(crate) fn managed_path(
+    ) -> Result<PathBuf, Box<dyn Error>> {
         let base = Self::data_directory()?;
+        let version =
+            Self::managed_version()?;
 
         Ok(
             base
                 .join("standardizer")
                 .join("tools")
                 .join("biome")
-                .join(Self::VERSION)
+                .join(version.to_string())
                 .join(Self::executable_name()),
         )
     }
@@ -31,41 +55,55 @@ impl BiomeInstallation {
     pub(crate) fn install(
         force: bool,
     ) -> Result<PathBuf, Box<dyn Error>> {
-        let destination = Self::managed_path()?;
+        let destination =
+            Self::managed_path()?;
+
+        let version =
+            Self::managed_version()?;
 
         if destination.is_file()
             && !force
-            && Self::is_expected_version(&destination)?
+            && Self::is_expected_version(
+                &destination,
+            )?
         {
             return Ok(destination);
         }
 
         let parent = destination
             .parent()
-            .ok_or("invalid managed Biome destination")?;
+            .ok_or(
+                "invalid managed Biome destination",
+            )?;
 
         fs::create_dir_all(parent)?;
 
-        let temporary = parent.join(Self::temporary_name());
+        let temporary =
+            parent.join(Self::temporary_name());
 
         if temporary.exists() {
             fs::remove_file(&temporary)?;
         }
 
-        let url = Self::download_url()?;
-        let platform = Self::platform_name()?;
+        let url =
+            Self::download_url(&version)?;
+
+        let platform =
+            Self::platform_name()?;
 
         eprintln!(
             "standardizer: téléchargement de Biome {} pour {}",
-            Self::VERSION,
+            version,
             platform,
         );
 
         let client = Client::builder()
-            .user_agent(format!(
-                "standardizer/{}",
-                env!("CARGO_PKG_VERSION"),
-            ))
+            .user_agent(
+                format!(
+                    "standardizer/{}",
+                    env!("CARGO_PKG_VERSION"),
+                ),
+            )
             .build()?;
 
         let mut response = client
@@ -73,57 +111,74 @@ impl BiomeInstallation {
             .send()?
             .error_for_status()?;
 
-        let mut file = File::create(&temporary)?;
+        let mut file =
+            File::create(&temporary)?;
 
-        let copy_result = io::copy(
-            &mut response,
-            &mut file,
-        );
+        let copy_result =
+            io::copy(
+                &mut response,
+                &mut file,
+            );
 
         drop(file);
 
         if let Err(error) = copy_result {
-            let _ = fs::remove_file(&temporary);
+            let _ =
+                fs::remove_file(&temporary);
+
             return Err(error.into());
         }
 
-        Self::make_executable(&temporary)?;
+        Self::make_executable(
+            &temporary,
+        )?;
 
-        if !Self::is_expected_version(&temporary)? {
-            let _ = fs::remove_file(&temporary);
+        if !Self::is_expected_version(
+            &temporary,
+        )? {
+            let _ =
+                fs::remove_file(&temporary);
 
             return Err(
                 format!(
                     "downloaded Biome does not report expected version {}",
-                    Self::VERSION,
+                    version,
                 )
                 .into(),
             );
         }
 
         if destination.exists() {
-            fs::remove_file(&destination)?;
+            fs::remove_file(
+                &destination,
+            )?;
         }
 
-        if let Err(error) = fs::rename(
-            &temporary,
-            &destination,
-        ) {
-            let _ = fs::remove_file(&temporary);
+        if let Err(error) =
+            fs::rename(
+                &temporary,
+                &destination,
+            )
+        {
+            let _ =
+                fs::remove_file(&temporary);
+
             return Err(error.into());
         }
 
         eprintln!(
             "standardizer: Biome {} installé dans {}",
-            Self::VERSION,
+            version,
             destination.display(),
         );
 
         Ok(destination)
     }
 
-    pub(crate) fn uninstall() -> Result<bool, Box<dyn Error>> {
-        let path = Self::managed_path()?;
+    pub(crate) fn uninstall(
+    ) -> Result<bool, Box<dyn Error>> {
+        let path =
+            Self::managed_path()?;
 
         if !path.exists() {
             return Ok(false);
@@ -131,13 +186,21 @@ impl BiomeInstallation {
 
         fs::remove_file(&path)?;
 
-        if let Some(version_directory) = path.parent() {
-            let _ = fs::remove_dir(version_directory);
+        if let Some(version_directory) =
+            path.parent()
+        {
+            let _ =
+                fs::remove_dir(
+                    version_directory,
+                );
 
             if let Some(biome_directory) =
                 version_directory.parent()
             {
-                let _ = fs::remove_dir(biome_directory);
+                let _ =
+                    fs::remove_dir(
+                        biome_directory,
+                    );
             }
         }
 
@@ -146,39 +209,58 @@ impl BiomeInstallation {
 
     pub(crate) fn version(
         path: &Path,
-    ) -> Result<Option<Version>, Box<dyn Error>> {
-        let output = match Command::new(path)
-            .arg("--version")
-            .output()
-        {
-            Ok(output) => output,
-            Err(error)
-                if error.kind() == io::ErrorKind::NotFound =>
+    ) -> Result<
+        Option<Version>,
+        Box<dyn Error>,
+    > {
+        let output =
+            match Command::new(path)
+                .arg("--version")
+                .output()
             {
-                return Ok(None);
-            }
-            Err(error) => return Err(error.into()),
-        };
+                Ok(output) => output,
+
+                Err(error)
+                    if error.kind()
+                        == io::ErrorKind::NotFound =>
+                {
+                    return Ok(None);
+                }
+
+                Err(error) => {
+                    return Err(
+                        error.into(),
+                    );
+                }
+            };
 
         if !output.status.success() {
             return Ok(None);
         }
 
         let stdout =
-            String::from_utf8_lossy(&output.stdout);
+            String::from_utf8_lossy(
+                &output.stdout,
+            );
 
-        Ok(Self::parse_version(&stdout))
+        Ok(
+            Self::parse_version(
+                &stdout,
+            ),
+        )
     }
 
     pub(crate) fn is_compatible(
         path: &Path,
     ) -> Result<bool, Box<dyn Error>> {
-        let Some(version) = Self::version(path)? else {
+        let Some(version) =
+            Self::version(path)?
+        else {
             return Ok(false);
         };
 
         let minimum =
-            Version::parse(Self::MINIMUM_VERSION)?;
+            Self::minimum_version()?;
 
         Ok(version >= minimum)
     }
@@ -186,56 +268,80 @@ impl BiomeInstallation {
     pub(crate) fn is_expected_version(
         path: &Path,
     ) -> Result<bool, Box<dyn Error>> {
-        let Some(version) = Self::version(path)? else {
+        let Some(version) =
+            Self::version(path)?
+        else {
             return Ok(false);
         };
 
         let expected =
-            Version::parse(Self::VERSION)?;
+            Self::managed_version()?;
 
         Ok(version == expected)
     }
 
-    fn parse_version(output: &str) -> Option<Version> {
+    fn parse_version(
+        output: &str,
+    ) -> Option<Version> {
         output
             .split_whitespace()
-            .find_map(|token| {
-                let token = token.trim_matches(
-                    |character: char| {
-                        !character.is_ascii_alphanumeric()
-                            && character != '.'
-                            && character != '-'
-                            && character != '+'
-                    },
-                );
+            .find_map(
+                |token| {
+                    let token =
+                        token.trim_matches(
+                            |character: char| {
+                                !character
+                                    .is_ascii_alphanumeric()
+                                    && character != '.'
+                                    && character != '-'
+                                    && character != '+'
+                            },
+                        );
 
-                let token =
-                    token.strip_prefix('v').unwrap_or(token);
+                    let token =
+                        token
+                            .strip_prefix('v')
+                            .unwrap_or(token);
 
-                Version::parse(token).ok()
-            })
+                    Version::parse(
+                        token,
+                    )
+                    .ok()
+                },
+            )
     }
 
-    fn data_directory() -> Result<PathBuf, Box<dyn Error>> {
+    fn data_directory(
+    ) -> Result<PathBuf, Box<dyn Error>> {
         #[cfg(target_os = "windows")]
         {
-            let local = env::var_os("LOCALAPPDATA")
+            let local =
+                env::var_os(
+                    "LOCALAPPDATA",
+                )
                 .ok_or(
                     "LOCALAPPDATA is not defined",
                 )?;
 
-            return Ok(PathBuf::from(local));
+            return Ok(
+                PathBuf::from(local),
+            );
         }
 
         #[cfg(target_os = "macos")]
         {
-            let home = env::var_os("HOME")
-                .ok_or("HOME is not defined")?;
+            let home =
+                env::var_os("HOME")
+                    .ok_or(
+                        "HOME is not defined",
+                    )?;
 
             return Ok(
                 PathBuf::from(home)
                     .join("Library")
-                    .join("Application Support"),
+                    .join(
+                        "Application Support",
+                    ),
             );
         }
 
@@ -245,13 +351,20 @@ impl BiomeInstallation {
         ))]
         {
             if let Some(xdg) =
-                env::var_os("XDG_DATA_HOME")
+                env::var_os(
+                    "XDG_DATA_HOME",
+                )
             {
-                return Ok(PathBuf::from(xdg));
+                return Ok(
+                    PathBuf::from(xdg),
+                );
             }
 
-            let home = env::var_os("HOME")
-                .ok_or("HOME is not defined")?;
+            let home =
+                env::var_os("HOME")
+                    .ok_or(
+                        "HOME is not defined",
+                    )?;
 
             return Ok(
                 PathBuf::from(home)
@@ -261,43 +374,61 @@ impl BiomeInstallation {
         }
 
         #[allow(unreachable_code)]
-        Err("unsupported operating system".into())
+        Err(
+            "unsupported operating system"
+                .into(),
+        )
     }
 
     fn platform_name(
     ) -> Result<&'static str, Box<dyn Error>> {
-        let os = env::consts::OS;
-        let arch = env::consts::ARCH;
+        let os =
+            env::consts::OS;
+
+        let arch =
+            env::consts::ARCH;
 
         match (os, arch) {
             ("windows", "x86_64") => {
                 Ok("win32-x64")
             }
+
             ("windows", "aarch64") => {
                 Ok("win32-arm64")
             }
+
             ("macos", "x86_64") => {
                 Ok("darwin-x64")
             }
+
             ("macos", "aarch64") => {
                 Ok("darwin-arm64")
             }
+
             ("linux", "x86_64")
-                if cfg!(target_env = "musl") =>
+                if cfg!(
+                    target_env = "musl"
+                ) =>
             {
                 Ok("linux-x64-musl")
             }
+
             ("linux", "aarch64")
-                if cfg!(target_env = "musl") =>
+                if cfg!(
+                    target_env = "musl"
+                ) =>
             {
                 Ok("linux-arm64-musl")
             }
+
             ("linux", "x86_64") => {
                 Ok("linux-x64")
             }
+
             ("linux", "aarch64") => {
                 Ok("linux-arm64")
             }
+
             _ => Err(
                 format!(
                     "Biome installation unsupported on {os}/{arch}",
@@ -307,35 +438,57 @@ impl BiomeInstallation {
         }
     }
 
-    fn asset_name() -> Result<String, Box<dyn Error>> {
-        let platform = Self::platform_name()?;
+    fn asset_name(
+    ) -> Result<String, Box<dyn Error>> {
+        let platform =
+            Self::platform_name()?;
 
-        if cfg!(target_os = "windows") {
-            Ok(format!("biome-{platform}.exe"))
+        if cfg!(
+            target_os = "windows"
+        ) {
+            Ok(
+                format!(
+                    "biome-{platform}.exe",
+                ),
+            )
         } else {
-            Ok(format!("biome-{platform}"))
+            Ok(
+                format!(
+                    "biome-{platform}",
+                ),
+            )
         }
     }
 
-    fn download_url() -> Result<String, Box<dyn Error>> {
-        let asset = Self::asset_name()?;
+    fn download_url(
+        version: &Version,
+    ) -> Result<String, Box<dyn Error>> {
+        let asset =
+            Self::asset_name()?;
 
-        Ok(format!(
-            "https://github.com/biomejs/biome/releases/download/@biomejs/biome@{}/{asset}",
-            Self::VERSION,
-        ))
+        Ok(
+            format!(
+                "https://github.com/biomejs/biome/releases/download/@biomejs/biome@{version}/{asset}",
+            ),
+        )
     }
 
-    fn executable_name() -> &'static str {
-        if cfg!(target_os = "windows") {
+    fn executable_name(
+    ) -> &'static str {
+        if cfg!(
+            target_os = "windows"
+        ) {
             "biome.exe"
         } else {
             "biome"
         }
     }
 
-    fn temporary_name() -> String {
-        if cfg!(target_os = "windows") {
+    fn temporary_name(
+    ) -> String {
+        if cfg!(
+            target_os = "windows"
+        ) {
             format!(
                 "biome.{}.download.exe",
                 process::id(),
@@ -355,9 +508,12 @@ impl BiomeInstallation {
         use std::os::unix::fs::PermissionsExt;
 
         let mut permissions =
-            fs::metadata(path)?.permissions();
+            fs::metadata(path)?
+                .permissions();
 
-        permissions.set_mode(0o755);
+        permissions.set_mode(
+            0o755,
+        );
 
         fs::set_permissions(
             path,

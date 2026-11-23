@@ -9,6 +9,7 @@ mod resolved_tool;
 mod routing;
 mod rustfmt;
 mod tool_command;
+mod tool_configuration;
 mod tool_id;
 mod tool_manager;
 mod tool_source;

@@ -8,11 +8,11 @@ repository = "https://github.com/BezotCorp/standardizer"
 readme = "README.md"
 keywords = ["formatter", "git", "rustfmt", "biome", "cli"]
 categories = ["command-line-utilities", "development-tools"]
-include = ["src/**", "LICENSE", "data/routing.bin", "data/routing.ron"]
+include = ["src/**", "LICENSE", "data/routing.bin", "data/routing.ron", "data/tools.ron"]
 
 [features]
 default = ["embedded-routing"]
-routing-source = ["dep:ron", "dep:serde", "common/source"]
+routing-source = ["common/source"]
 embedded-routing = []
 
 [dependencies]
@@ -24,6 +24,6 @@ bincode-next = "3"
 common = { package = "standardizer-common", version = "1.1.0", features = [
   "decode",
 ] }
-ron = { version = "0.12", optional = true }
-serde = { version = "1", features = ["derive"], optional = true }
+ron = "0.12"
+serde = { version = "1", features = ["derive"] }
 serde_json = "1"

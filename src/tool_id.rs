@@ -1,4 +1,15 @@
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+use serde::Deserialize;
+
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+)]
 pub(crate) enum ToolId {
     Biome,
 }

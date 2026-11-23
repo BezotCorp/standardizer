@@ -52,6 +52,12 @@ impl ToolsGui {
     ) -> Result<(), Box<dyn Error>> {
         let tool = ToolId::Biome;
 
+        let minimum_version =
+            BiomeInstallation::minimum_version()?;
+
+        let managed_version =
+            BiomeInstallation::managed_version()?;
+
         let mut status =
             ToolManager::status(
                 tool,
@@ -207,12 +213,12 @@ impl ToolsGui {
                                     let required_version =
                                         format!(
                                             ">= {}",
-                                            BiomeInstallation::MINIMUM_VERSION,
+                                            minimum_version,
                                         );
 
                                     let managed_version =
-                                        BiomeInstallation::VERSION
-                                            .to_owned();
+                                        managed_version
+                                            .to_string();
 
                                     let active_version =
                                         status
@@ -256,14 +262,10 @@ impl ToolsGui {
                                             );
 
                                     let managed_state =
-                                        if status
-                                            .managed_installed()
-                                        {
-                                            "Installed"
-                                        } else {
-                                            "Not installed"
-                                        }
-                                        .to_owned();
+                                        status
+                                            .managed_state()
+                                            .label()
+                                            .to_owned();
 
                                     let managed_path =
                                         status
@@ -359,9 +361,13 @@ impl ToolsGui {
                                         |ui| {
                                             let install_label =
                                                 if status
-                                                    .managed_installed()
+                                                    .managed_ready()
                                                 {
                                                     "Reinstall"
+                                                } else if status
+                                                    .managed_installed()
+                                                {
+                                                    "Repair"
                                                 } else {
                                                     "Install"
                                                 };

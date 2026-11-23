@@ -29,17 +29,23 @@ impl Biome {
             "standardizer: aucune version compatible de Biome trouvée"
         );
 
+        let minimum_version =
+            BiomeInstallation::minimum_version()?;
+
         eprintln!(
             "standardizer: Biome >= {} requis",
-            BiomeInstallation::MINIMUM_VERSION,
+            minimum_version,
         );
 
         if io::stdin().is_terminal()
             && io::stdout().is_terminal()
         {
+            let managed_version =
+                BiomeInstallation::managed_version()?;
+
             print!(
                 "Installer Biome {} avec Standardizer maintenant ? [y/N] ",
-                BiomeInstallation::VERSION,
+                managed_version,
             );
 
             io::stdout().flush()?;

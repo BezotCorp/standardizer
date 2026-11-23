@@ -48,7 +48,7 @@ impl ToolCommand {
                 println!(
                     "{} {} installed at {}",
                     tool.display_name(),
-                    Self::managed_version(tool),
+                    Self::managed_version(tool)?,
                     path.display(),
                 );
 
@@ -153,10 +153,10 @@ impl ToolCommand {
 
     fn managed_version(
         tool: ToolId,
-    ) -> &'static str {
+    ) -> Result<semver::Version, Box<dyn Error>> {
         match tool {
             ToolId::Biome => {
-                BiomeInstallation::VERSION
+                BiomeInstallation::managed_version()
             }
         }
     }

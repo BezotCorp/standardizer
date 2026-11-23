@@ -3,7 +3,10 @@ use crate::{
     resolved_tool::ResolvedTool,
     tool_id::ToolId,
     tool_source::ToolSource,
-    tool_status::ToolStatus,
+    tool_status::{
+        ManagedToolState,
+        ToolStatus,
+    },
 };
 use std::{
     env,
@@ -34,7 +37,6 @@ impl ToolManager {
             )? {
                 return Ok(Some(
                     ResolvedTool::new(
-                        tool,
                         candidate.0,
                         candidate.1,
                         version,
@@ -56,15 +58,24 @@ impl ToolManager {
         let managed_path =
             Self::managed_path(tool)?;
 
-        let managed_installed =
-            managed_path.is_file();
+        let managed_state =
+            if !managed_path.is_file() {
+                ManagedToolState::NotInstalled
+            } else if Self::managed_ready(
+                tool,
+                &managed_path,
+            )? {
+                ManagedToolState::Ready
+            } else {
+                ManagedToolState::Invalid
+            };
 
         Ok(
             ToolStatus::new(
                 tool,
                 active,
                 managed_path,
-                managed_installed,
+                managed_state,
             ),
         )
     }
@@ -99,6 +110,17 @@ impl ToolManager {
         }
     }
 
+    fn managed_ready(
+        tool: ToolId,
+        path: &Path,
+    ) -> Result<bool, Box<dyn Error>> {
+        match tool {
+            ToolId::Biome => {
+                BiomeInstallation::is_expected_version(path)
+            }
+        }
+    }
+
     pub(crate) fn managed_path(
         tool: ToolId,
     ) -> Result<PathBuf, Box<dyn Error>> {
@@ -129,9 +151,8 @@ impl ToolManager {
     ) -> Result<bool, Box<dyn Error>> {
         match tool {
             ToolId::Biome => {
-                let minimum = semver::Version::parse(
-                    BiomeInstallation::MINIMUM_VERSION,
-                )?;
+                let minimum =
+                    BiomeInstallation::minimum_version()?;
 
                 Ok(version >= &minimum)
             }
