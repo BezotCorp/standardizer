@@ -2846,9 +2846,9 @@ dependencies = [
 
 [[package]]
 name = "standardizer-common"
-version = "2.1.0"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf6dc8f3589a17b5d6e9cf015aab37178aa42fed0467bc2f83c6f2556f15740a"
+checksum = "bc8730bb808de154c610b8a5bd23f812a29cc95de1d1ac235645841ee038e3c0"
 dependencies = [
  "bincode-next",
  "serde",
