@@ -30,8 +30,8 @@ The default executable embeds `data/routing.bin`.
 
 The source representation is stored in `data/routing.ron`.
 
-The routing generator is maintained separately in the
-`BezotCorp/standardizer-generate-routing` repository.
+The data generator is maintained separately in the
+`BezotCorp/standardizer-generate-data` repository.
 
 ## Building
 
