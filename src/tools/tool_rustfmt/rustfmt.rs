@@ -1,4 +1,4 @@
-use crate::{cargo_metadata::CargoMetadata, conformance_intent::ConformanceIntent};
+use crate::{cargo_metadata::CargoMetadata, goals::ConformanceIntent};
 use std::{error::Error, path::Path, process::Command};
 
 pub(crate) struct Rustfmt;

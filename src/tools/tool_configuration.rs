@@ -4,7 +4,7 @@ use standardizer_common::tools::ToolConfiguration;
 use std::error::Error;
 
 pub(crate) fn load() -> Result<ToolConfiguration, Box<dyn Error>> {
-    let bytes = include_bytes!("../data/tools.bin");
+    let bytes = include_bytes!("../../data/tools.bin");
 
     let (configuration, consumed): (ToolConfiguration, usize) =
         decode_from_slice(bytes, config::standard())?;

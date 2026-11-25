@@ -24,6 +24,16 @@ standardizer fix
 
 `fix` applies supported corrections and stages only the files it changed.
 
+```sh
+standardizer tools            # open the graphical tool manager
+standardizer tools status     # show available tool installations
+standardizer tools install biome
+standardizer tools uninstall biome
+```
+
+`standardizer --help` (or `<command> --help`) prints usage, and
+`standardizer --version` prints the installed version.
+
 ## Routing
 
 The default executable embeds `data/routing.bin`.

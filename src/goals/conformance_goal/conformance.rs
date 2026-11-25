@@ -1,5 +1,7 @@
 use crate::{
-    biome::Biome, conformance_intent::ConformanceIntent, routing, rustfmt::Rustfmt,
+    goals::ConformanceIntent,
+    routing,
+    tools::{Biome, Rustfmt},
     tracked_file::TrackedFile,
 };
 use standardizer_common::tools::Tool;

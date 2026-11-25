@@ -1,8 +1,7 @@
 use crate::{
-    biome_installation::BiomeInstallation,
     resolved_tool::ResolvedTool,
-    tool_source::ToolSource,
-    tool_status::{ManagedToolState, ToolStatus},
+    tools::BiomeInstallation,
+    tools::{ManagedToolState, ToolSource, ToolStatus},
 };
 use standardizer_common::tools::Tool;
 use std::{

@@ -1,4 +1,4 @@
-use crate::tool_source::ToolSource;
+use crate::tools::ToolSource;
 use semver::Version;
 use std::path::PathBuf;
 

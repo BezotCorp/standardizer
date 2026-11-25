@@ -1,6 +1,5 @@
-use crate::{
-    biome_installation::BiomeInstallation, tool_manager::ToolManager, tools_gui::ToolsGui,
-};
+use crate::tools::BiomeInstallation;
+use crate::{tools::ToolManager, tools_gui::ToolsGui};
 use standardizer_common::tools::Tool;
 use std::{env, error::Error, ffi::OsString};
 
@@ -56,8 +55,34 @@ impl ToolCommand {
                 Ok(())
             }
 
+            Some("-h" | "--help" | "help") => {
+                print!("{}", Self::help());
+
+                Ok(())
+            }
+
             _ => Err(Self::usage().into()),
         }
+    }
+
+    fn help() -> &'static str {
+        "Manage the formatting tools used by Standardizer.
+
+Usage: standardizer tools [COMMAND]
+
+Commands:
+  ui                 Open the graphical tool manager (default)
+  status             Show which tool installations are available and in use
+  install <TOOL>     Install a Standardizer-managed copy of a tool
+  uninstall <TOOL>   Remove the Standardizer-managed copy of a tool
+  help               Print this help
+
+Tools:
+  biome
+
+Options:
+  -h, --help  Print this help
+"
     }
 
     fn status() -> Result<(), Box<dyn Error>> {
@@ -131,6 +156,7 @@ impl ToolCommand {
     }
 
     fn usage() -> &'static str {
-        "usage: standardizer tools [ui|status|install biome|uninstall biome]"
+        "usage: standardizer tools [ui|status|install biome|uninstall biome]\n\n\
+         Run 'standardizer tools --help' for more information."
     }
 }

@@ -1,5 +1,6 @@
 use crate::{
-    conformance::Conformance, conformance_intent::ConformanceIntent, git_repository::GitRepository,
+    git_repository::GitRepository,
+    goals::{Conformance, ConformanceIntent},
 };
 use std::{error::Error, ffi::OsString};
 

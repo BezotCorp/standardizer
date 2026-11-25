@@ -1,4 +1,4 @@
-use crate::tool_configuration;
+use crate::tools::tool_configuration;
 use reqwest::blocking::Client;
 use semver::Version;
 use standardizer_common::tools::Tool;

@@ -1,4 +1,4 @@
-use crate::{conformance_intent::ConformanceIntent, tracked_file::TrackedFile};
+use crate::{goals::ConformanceIntent, tracked_file::TrackedFile};
 use std::{
     error::Error,
     ffi::OsString,

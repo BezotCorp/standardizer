@@ -1,6 +1,6 @@
 use crate::{
-    biome_installation::BiomeInstallation, conformance_intent::ConformanceIntent,
-    tool_manager::ToolManager,
+    goals::ConformanceIntent,
+    tools::{BiomeInstallation, ToolManager},
 };
 use standardizer_common::tools::Tool;
 use std::{
