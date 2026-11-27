@@ -20,12 +20,10 @@ include = [
 [features]
 default = ["embedded-routing", "embedded-tools"]
 routing-source = [
-  "dep:ron",
-  "dep:serde",
   "standardizer-common/source",
   "embedded-tools",
 ]
-tools-source = ["dep:ron", "dep:serde"]
+tools-source = ["standardizer-common/source"]
 embedded-routing = []
 embedded-tools = []
 
@@ -43,8 +41,5 @@ eframe = { version = "0.37", default-features = false, features = [
   "wayland",
   "x11",
 ] }
-bincode-next = "3"
-standardizer-common = { version = "2", features = ["decode"] }
-ron = { version = "0.12", optional = true }
-serde = { version = "1", features = ["derive"], optional = true }
+standardizer-common = { version = "=2.3.0", features = ["decode"] }
 serde_json = "1"

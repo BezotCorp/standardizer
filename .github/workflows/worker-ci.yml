@@ -24,6 +24,10 @@ jobs:
         with:
           node-version: "24"
 
+      - name: Generate data
+        shell: bash
+        run: ./scripts/generate-data.sh
+
       - name: Standardizer
         run: cargo run --locked -- check
 

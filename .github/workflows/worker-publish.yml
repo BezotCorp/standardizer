@@ -32,6 +32,10 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
+      - name: Generate data
+        shell: bash
+        run: ./scripts/generate-data.sh
+
       - name: Build
         run: cargo build --release --locked --target ${{ matrix.target }}
 
@@ -86,6 +90,10 @@ jobs:
         with:
           path: artifacts
           merge-multiple: true
+
+      - name: Generate data
+        shell: bash
+        run: ./scripts/generate-data.sh
 
       - name: Publish crate and create GitHub release
         env:

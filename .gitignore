@@ -1,2 +1,4 @@
 /target/
 node_modules/
+/data/routing.bin
+/data/tools.bin

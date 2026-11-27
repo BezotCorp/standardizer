@@ -17,10 +17,6 @@ impl RunningOperation {
         }
     }
 
-    pub(crate) fn operation(&self) -> &ToolOperation {
-        &self.operation
-    }
-
     pub(crate) fn receiver(&self) -> &Receiver<Result<String, String>> {
         &self.receiver
     }

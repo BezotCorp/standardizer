@@ -6,7 +6,7 @@ use standardizer_common::tools::Tool;
 use std::{
     error::Error,
     path::PathBuf,
-    sync::mpsc::{self, Receiver, TryRecvError},
+    sync::mpsc::{self, TryRecvError},
     thread,
     time::Duration,
 };
@@ -207,10 +207,10 @@ impl ToolsGui {
                     ui.add_space(8.0);
                     ui.horizontal_wrapped(|ui| {
                         ui.add(egui::Label::new(&message).selectable(true));
-                        if ui.small_button("Copy").clicked() {
-                            if let Err(error) = Self::copy_text(&mut clipboard, &message) {
-                                eprintln!("standardizer: clipboard unavailable: {error}",);
-                            }
+                        if ui.small_button("Copy").clicked()
+                            && let Err(error) = Self::copy_text(&mut clipboard, &message)
+                        {
+                            eprintln!("standardizer: clipboard unavailable: {error}",);
                         }
                     });
                 }
@@ -283,10 +283,10 @@ impl ToolsGui {
         ui.label(name);
         ui.add(egui::Label::new(value).selectable(true));
         if copyable {
-            if ui.small_button("Copy").clicked() {
-                if let Err(error) = Self::copy_text(clipboard, value) {
-                    eprintln!("standardizer: clipboard unavailable: {error}",);
-                }
+            if ui.small_button("Copy").clicked()
+                && let Err(error) = Self::copy_text(clipboard, value)
+            {
+                eprintln!("standardizer: clipboard unavailable: {error}",);
             }
         } else {
             ui.label("");
