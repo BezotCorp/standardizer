@@ -3,11 +3,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
     process::Command,
-    sync::atomic::{AtomicU64, Ordering},
-    time::{SystemTime, UNIX_EPOCH},
 };
-
-static NEXT_ID: AtomicU64 = AtomicU64::new(0);
 
 pub(in crate::configuration::tests) struct TestRepository {
     root: PathBuf,
@@ -15,27 +11,11 @@ pub(in crate::configuration::tests) struct TestRepository {
 
 impl TestRepository {
     pub(in crate::configuration::tests) fn new() -> Result<Self, Box<dyn Error>> {
-        let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
-
-        let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
-
-        let root = std::env::temp_dir().join(format!(
-            "standardizer-configuration-{}-{timestamp}-{id}",
-            std::process::id()
-        ));
-
-        fs::create_dir(&root)?;
+        let root = crate::configuration::tests::preparer::Preparer::prepare("untracked")?;
 
         let repository = Self { root };
 
-        repository.git(&["init", "--quiet"])?;
-        repository.git(&["config", "user.name", "Standardizer Test"])?;
-        repository.git(&["config", "user.email", "test@example.invalid"])?;
-        repository.git(&["config", "commit.gpgsign", "false"])?;
-
-        fs::create_dir_all(repository.root.join(".git/test-hooks"))?;
-
-        repository.git(&["config", "core.hooksPath", ".git/test-hooks"])?;
+        repository.git(&["clean", "-fd"])?;
 
         Ok(repository)
     }
@@ -64,16 +44,24 @@ impl TestRepository {
         &self,
         arguments: &[&str],
     ) -> Result<String, Box<dyn Error>> {
-        let output = Command::new("git")
-            .current_dir(&self.root)
-            .env_remove("GIT_DIR")
-            .env_remove("GIT_WORK_TREE")
-            .env_remove("GIT_INDEX_FILE")
-            .env_remove("GIT_COMMON_DIR")
-            .env_remove("GIT_OBJECT_DIRECTORY")
-            .env_remove("GIT_ALTERNATE_OBJECT_DIRECTORIES")
-            .args(arguments)
-            .output()?;
+        let mut command = Command::new("git");
+
+        command.current_dir(&self.root);
+
+        for (key, _) in std::env::vars_os() {
+            if key.to_string_lossy().starts_with("GIT_") {
+                command.env_remove(key);
+            }
+        }
+
+        command.env("GIT_CONFIG_NOSYSTEM", "1");
+        command.env(
+            "GIT_CONFIG_GLOBAL",
+            self.root.join(".git/test-global-config"),
+        );
+        command.env("LC_ALL", "C");
+
+        let output = command.args(arguments).output()?;
 
         if !output.status.success() {
             return Err(format!(

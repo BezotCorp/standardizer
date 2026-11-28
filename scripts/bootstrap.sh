@@ -33,6 +33,7 @@ if ! command -v standardizer >/dev/null 2>&1; then
 fi
 
 ./scripts/generate-data.sh
+./scripts/test-integration.sh --prepare
 ./.githooks/install
 
 printf 'Development environment ready.\n'

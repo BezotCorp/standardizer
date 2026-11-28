@@ -4,11 +4,7 @@ use std::{
     fs,
     path::PathBuf,
     process::{self, Command},
-    sync::{
-        OnceLock,
-        atomic::{AtomicU64, Ordering},
-    },
-    time::{SystemTime, UNIX_EPOCH},
+    sync::OnceLock,
 };
 
 pub(crate) struct TestRepository {
@@ -17,70 +13,19 @@ pub(crate) struct TestRepository {
 
 impl TestRepository {
     pub(crate) fn new() -> Result<Self, Box<dyn Error>> {
-        static NEXT_ID: AtomicU64 = AtomicU64::new(0);
+        let repository = Self::from_scenario("untracked")?;
 
-        let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
+        repository.git(&["clean", "-fd"])?;
 
-        let root = env::temp_dir().join(format!(
-            "standardizer-conformance-{}-{}-{}",
-            process::id(),
-            timestamp,
-            NEXT_ID.fetch_add(1, Ordering::Relaxed),
-        ));
+        let exclude = repository.root.join(".git/info/exclude");
+        let mut exclusions = fs::read_to_string(&exclude)?;
 
-        fs::create_dir(&root)?;
+        if !exclusions.ends_with('\n') {
+            exclusions.push('\n');
+        }
 
-        let repository = Self { root };
-
-        repository.git(&["init", "--quiet"])?;
-        repository.git(&["config", "user.name", "Standardizer Tests"])?;
-        repository.git(&["config", "user.email", "tests@example.invalid"])?;
-        repository.git(&["config", "commit.gpgsign", "false"])?;
-        repository.git(&[
-            "config",
-            "core.filemode",
-            if cfg!(unix) { "true" } else { "false" },
-        ])?;
-        repository.git(&["config", "core.autocrlf", "false"])?;
-        repository.write(".git/test-excludes", "")?;
-        repository.git(&["config", "core.excludesFile", ".git/test-excludes"])?;
-        repository.write(".git/test-global-config", "")?;
-
-        fs::create_dir(repository.root.join(".git/test-hooks"))?;
-        repository.git(&["config", "core.hooksPath", ".git/test-hooks"])?;
-
-        repository.write(
-            ".git/info/exclude",
-            "/.test-tools/\n/target/\n/Cargo.lock\n",
-        )?;
-
-        repository.write(
-            "Cargo.toml",
-            "[package]\nname = \"test-project\"\nversion = \"0.1.0\"\nedition = \"2024\"\n\n[[bin]]\nname = \"test-project\"\npath = \"main.rs\"\n\n[workspace]\n",
-        )?;
-
-        repository.write("main.rs", "fn main() {}\n")?;
-
-        repository.git(&["add", "--", "Cargo.toml", "main.rs"])?;
-        repository.git(&[
-            "commit",
-            "--quiet",
-            "-m",
-            "chore: initialize test repository",
-        ])?;
-
-        repository.git(&["rm", "--cached", "--quiet", "--", "main.rs"])?;
-        repository.git(&[
-            "commit",
-            "--quiet",
-            "-m",
-            "chore: exclude fixture entry point",
-        ])?;
-
-        repository.write(
-            ".git/info/exclude",
-            "/.test-tools/\n/target/\n/Cargo.lock\n/main.rs\n",
-        )?;
+        exclusions.push_str("/.test-tools/\n");
+        fs::write(exclude, exclusions)?;
 
         repository.install_formatter()?;
 
@@ -182,6 +127,30 @@ impl TestRepository {
         if !output.status.success() {
             return Err(format!(
                 "standardizer {intent} failed:\n{}\n{}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr),
+            )
+            .into());
+        }
+
+        Ok(())
+    }
+
+    pub(crate) fn from_scenario(scenario: &str) -> Result<Self, Box<dyn Error>> {
+        let root = crate::support::Preparer::prepare(scenario)?;
+
+        Ok(Self { root })
+    }
+
+    pub(crate) fn run_real(&self, intent: &str) -> Result<(), Box<dyn Error>> {
+        let output = self
+            .command(env!("CARGO_BIN_EXE_standardizer"))
+            .arg(intent)
+            .output()?;
+
+        if !output.status.success() {
+            return Err(format!(
+                "standardizer {intent} failed:\\n{}\\n{}",
                 String::from_utf8_lossy(&output.stdout),
                 String::from_utf8_lossy(&output.stderr),
             )
