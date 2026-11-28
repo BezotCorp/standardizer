@@ -88,8 +88,12 @@ jobs:
       - name: Download release binaries
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          path: ${{ runner.temp }}/standardizer-release-artifacts
           merge-multiple: true
+
+      - name: Check source integrity
+        shell: bash
+        run: ./scripts/check-package-integrity.sh --before-generation
 
       - name: Generate data
         shell: bash
@@ -100,5 +104,5 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
           RELEASE_VERSION: ${{ inputs.version }}
-          RELEASE_ASSETS_DIR: artifacts
+          RELEASE_ASSETS_DIR: ${{ runner.temp }}/standardizer-release-artifacts
         run: ./scripts/publish-rust-crate.sh standardizer "${{ github.repository }}"

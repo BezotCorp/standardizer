@@ -215,6 +215,42 @@ automatic deletion staging.
 
 Integration tests use independent temporary Git repositories.
 
+## Generated data and package integrity
+
+The RON files are the version-controlled source of truth. Binary data files
+are generated from these sources using the pinned version of
+`standardizer-generate-data`.
+
+Generated binary files are intentionally excluded from Git to prevent binary
+merge conflicts and inconsistencies between source data and generated data.
+
+The following generated artifacts are included in the published Cargo package:
+
+- `data/routing.bin`
+- `data/tools.bin`
+
+Cargo does not distinguish intentionally generated package files from
+unexpected working tree changes. Consequently, package verification and
+publication use `--allow-dirty` only after passing an explicit integrity check.
+
+The shared `scripts/check-package-integrity.sh` script verifies that:
+
+- The Git index and working tree contain no unexpected changes.
+- Both generated artifacts exist, are non-empty regular files, are ignored
+  by Git, and are not tracked.
+- Both generated artifacts are included in the Cargo package.
+- Every other packaged source file is tracked by Git.
+- Cargo-generated package metadata is not present in the source tree.
+
+Any unexpected change or unauthorized package file aborts publication.
+
+The same integrity validation is used during CI package verification and
+actual crate publication. Cargo may mark the published package as dirty
+because it contains the intentionally generated binary artifacts.
+
+Consumers receive the generated binary data directly in the published crate
+and do not need to install the data generator.
+
 ## License
 
 Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).

@@ -9,12 +9,12 @@ readme = "README.md"
 keywords = ["formatter", "git", "rustfmt", "biome", "cli"]
 categories = ["command-line-utilities", "development-tools"]
 include = [
-  "src/**",
-  "LICENSE",
-  "data/routing.bin",
-  "data/routing.ron",
-  "data/tools.bin",
-  "data/tools.ron",
+  "/src/**",
+  "/LICENSE",
+  "/data/routing.bin",
+  "/data/routing.ron",
+  "/data/tools.bin",
+  "/data/tools.ron",
 ]
 
 [features]

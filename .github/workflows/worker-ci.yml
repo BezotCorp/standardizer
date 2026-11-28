@@ -24,6 +24,10 @@ jobs:
         with:
           node-version: "24"
 
+      - name: Check source integrity
+        shell: bash
+        run: ./scripts/check-package-integrity.sh --before-generation
+
       - name: Generate data
         shell: bash
         run: ./scripts/generate-data.sh
@@ -41,4 +45,7 @@ jobs:
         run: cargo test --locked --all-features
 
       - name: Check package publication
-        run: cargo publish --dry-run --locked
+        shell: bash
+        run: |
+          ./scripts/check-package-integrity.sh
+          cargo publish --dry-run --locked --allow-dirty
