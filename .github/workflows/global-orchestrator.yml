@@ -6,11 +6,9 @@ on:
       - dev
       - main
 
-  pull_request_target:
+  push:
     branches:
       - main
-    types:
-      - closed
 
 jobs:
   ci:
@@ -32,10 +30,9 @@ jobs:
 
   main:
     if: >-
-      github.event_name == 'pull_request_target' &&
-      github.event.action == 'closed' &&
-      github.event.pull_request.merged == true &&
-      github.event.pull_request.head.ref != 'release/pending'
+      github.event_name == 'push' &&
+      github.event.head_commit.message != 'chore: release version bump' &&
+      (!startsWith(github.event.head_commit.message, format('chore: release version bump{0}', fromJSON('"\n"'))))
     permissions:
       contents: write
       pull-requests: write
