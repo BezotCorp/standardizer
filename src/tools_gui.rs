@@ -11,6 +11,8 @@ use std::{
     time::Duration,
 };
 
+const CLIPBOARD_UNAVAILABLE: &str = "standardizer: clipboard unavailable";
+
 pub(crate) struct ToolsGui;
 
 impl ToolsGui {
@@ -210,7 +212,7 @@ impl ToolsGui {
                         if ui.small_button("Copy").clicked()
                             && let Err(error) = Self::copy_text(&mut clipboard, &message)
                         {
-                            eprintln!("standardizer: clipboard unavailable: {error}",);
+                            eprintln!("{CLIPBOARD_UNAVAILABLE}: {error}",);
                         }
                     });
                 }
@@ -286,7 +288,7 @@ impl ToolsGui {
             if ui.small_button("Copy").clicked()
                 && let Err(error) = Self::copy_text(clipboard, value)
             {
-                eprintln!("standardizer: clipboard unavailable: {error}",);
+                eprintln!("{CLIPBOARD_UNAVAILABLE}: {error}",);
             }
         } else {
             ui.label("");

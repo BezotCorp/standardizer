@@ -56,12 +56,12 @@ Standardizer does not automatically stage any deletion.
 
 This policy also applies to deletions occurring during execution.
 
-| Remaining unstaged changes | Automatic deletion staging |
-| --- | --- |
-| Deletions only | Enabled |
-| Deletions and modifications | Disabled |
-| Deletions and untracked files | Disabled |
-| No deletions | Nothing to stage |
+| Remaining unstaged changes    | Automatic deletion staging |
+| ----------------------------- | -------------------------- |
+| Deletions only                | Enabled                    |
+| Deletions and modifications   | Disabled                   |
+| Deletions and untracked files | Disabled                   |
+| No deletions                  | Nothing to stage           |
 
 Previously staged deletions are preserved.
 
@@ -84,10 +84,10 @@ standardizer tools uninstall biome
 Standardizer supports two optional JSON configuration files located at the
 root of the Git repository:
 
-| File | Purpose |
-| --- | --- |
-| `.standardizer/team.json` | Shared repository configuration |
-| `.standardizer/dev.json` | Personal developer configuration |
+| File                      | Purpose                          |
+| ------------------------- | -------------------------------- |
+| `.standardizer/team.json` | Shared repository configuration  |
+| `.standardizer/dev.json`  | Personal developer configuration |
 
 Configuration properties are resolved individually in the following order:
 
