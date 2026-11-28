@@ -6,11 +6,16 @@ use std::{
 pub(crate) struct TrackedFile {
     path: PathBuf,
     blob: OsString,
+    mode: String,
 }
 
 impl TrackedFile {
-    pub(crate) fn new(path: PathBuf, blob: OsString) -> Self {
-        Self { path, blob }
+    pub(crate) fn new(path: PathBuf, blob: OsString, mode: String) -> Self {
+        Self { path, blob, mode }
+    }
+
+    pub(crate) fn mode(&self) -> &str {
+        &self.mode
     }
 
     pub(crate) fn path(&self) -> &Path {

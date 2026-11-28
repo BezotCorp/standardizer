@@ -52,7 +52,9 @@ esac
 if [ "$CRATE_PUBLISHED" = false ]; then
   echo "Publishing $CRATE_NAME $RELEASE_VERSION to crates.io..."
 
-  cargo publish     --package "$CRATE_NAME"     --locked
+  ./scripts/check-package-integrity.sh
+
+  cargo publish --package "$CRATE_NAME" --locked --allow-dirty
 else
   echo "$CRATE_NAME $RELEASE_VERSION is already published on crates.io."
 fi

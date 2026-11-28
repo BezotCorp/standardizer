@@ -13,4 +13,5 @@ root=$(git rev-parse --show-toplevel) || {
 }
 
 cd "$root"
+./scripts/generate-data.sh
 exec standardizer fix
