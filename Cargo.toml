@@ -1,6 +1,6 @@
 [package]
 name = "standardizer"
-version = "1.0.1"
+version = "1.1.0"
 edition = "2024"
 description = "Check or fix the conformance of files in a Git repository by dispatching them to rustfmt or Biome"
 license = "Apache-2.0"
