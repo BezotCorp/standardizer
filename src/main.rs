@@ -1,4 +1,5 @@
 mod cargo_metadata;
+mod configuration;
 mod git_repository;
 mod goals;
 mod resolved_tool;

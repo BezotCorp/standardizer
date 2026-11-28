@@ -66,6 +66,7 @@ impl Biome {
         root: &Path,
         files: &[&Path],
         intent: ConformanceIntent,
+        mut execute: impl FnMut(&mut Command, &[&Path]) -> Result<bool, Box<dyn Error>>,
     ) -> Result<bool, Box<dyn Error>> {
         if files.is_empty() {
             return Ok(true);
@@ -89,11 +90,8 @@ impl Biome {
                 command.arg("--write");
             }
 
-            passed &= command
-                .arg("--")
-                .args(chunk.iter().map(|path| root.join(path)))
-                .status()?
-                .success();
+            command.arg("--");
+            passed &= execute(&mut command, chunk)?;
         }
 
         Ok(passed)

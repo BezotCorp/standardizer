@@ -10,8 +10,8 @@ cargo install standardizer --locked
 ```
 
 Standardizer requires Git and the formatting tools needed by the files being
-processed. Rust files use `rustfmt`; JavaScript, TypeScript, JSON, CSS and
-GraphQL files use Biome.
+processed. Rust files use `rustfmt`; JavaScript, TypeScript, JSON, JSONC, CSS,
+GraphQL, Markdown and YAML files use Biome.
 
 ## Usage
 
@@ -20,9 +20,54 @@ standardizer check
 standardizer fix
 ```
 
-`check` reports non-conforming files without modifying them.
+`check` reports non-conforming files without modifying files or the Git index.
 
-`fix` applies supported corrections and stages only the files it changed.
+`fix` applies supported corrections, stages the resulting changes and handles
+file deletions according to the repository configuration.
+
+Both commands process tracked files whose working tree content matches the
+Git index.
+
+### File protection
+
+Standardizer preserves:
+
+- Untracked files.
+- Tracked files with unstaged modifications.
+- Partially staged files.
+- Files whose content, type, executable mode or index entry changes
+  unexpectedly during processing, when those changes can be detected.
+
+Files without unstaged modifications remain eligible for processing,
+including files that have not been explicitly staged.
+
+Standardizer verifies file and index consistency before formatting and
+before staging corrections. These checks reduce the risk of including
+unrelated changes but do not provide atomic protection against concurrent
+modifications.
+
+### Automatic deletion staging
+
+By default, `fix` automatically stages unstaged deletions when they are the
+only remaining unstaged changes in the repository.
+
+If any unstaged modification or non-ignored untracked file remains,
+Standardizer does not automatically stage any deletion.
+
+This policy also applies to deletions occurring during execution.
+
+| Remaining unstaged changes | Automatic deletion staging |
+| --- | --- |
+| Deletions only | Enabled |
+| Deletions and modifications | Disabled |
+| Deletions and untracked files | Disabled |
+| No deletions | Nothing to stage |
+
+Previously staged deletions are preserved.
+
+Automatically staged deletions are reported individually.
+
+### Tool management
 
 ```sh
 standardizer tools            # open the graphical tool manager
@@ -33,6 +78,68 @@ standardizer tools uninstall biome
 
 `standardizer --help` (or `<command> --help`) prints usage, and
 `standardizer --version` prints the installed version.
+
+## Configuration
+
+Standardizer supports two optional JSON configuration files located at the
+root of the Git repository:
+
+| File | Purpose |
+| --- | --- |
+| `.standardizer/team.json` | Shared repository configuration |
+| `.standardizer/dev.json` | Personal developer configuration |
+
+Configuration properties are resolved individually in the following order:
+
+1. Team configuration.
+2. Developer configuration.
+3. Default values.
+
+Neither configuration file is required.
+
+Invalid JSON, unknown properties and unsupported values cause the operation
+to fail before applying corrections.
+
+### Deletion policy
+
+Automatic deletion staging is enabled by default.
+
+To disable it, add the following property to the team or developer
+configuration:
+
+```json
+{
+  "deletion": "ignore"
+}
+```
+
+When this property is set, Standardizer does not automatically stage
+deletions. Previously staged deletions remain unaffected.
+
+Omit the property to use the default behavior when no higher-priority
+configuration defines it.
+
+The only supported explicit value is `"ignore"`.
+
+### Developer configuration protection
+
+The developer configuration is intended to remain local to each developer
+and must not be committed.
+
+When running `fix`, Standardizer:
+
+- Adds `/.standardizer/dev.json` to the repository's local Git exclusions
+  in `.git/info/exclude`.
+- Preserves existing exclusion rules.
+- Removes the developer configuration from the Git index if it is tracked,
+  without deleting the local file.
+
+Standardizer does not modify `.gitignore` or rewrite Git history.
+
+The team configuration can be tracked and shared normally.
+
+Running `check` does not modify configuration files, Git exclusions or
+the Git index.
 
 ## Data
 
@@ -87,6 +194,26 @@ To use the RON routing source directly during development:
 ```sh
 cargo build --locked --no-default-features --features routing-source
 ```
+
+## Testing
+
+Run the test suite:
+
+```sh
+cargo test --locked
+```
+
+Run Clippy with all targets and features:
+
+```sh
+cargo clippy --locked --all-targets --all-features -- -D warnings
+```
+
+The test suite covers configuration resolution, developer configuration
+protection, Git index preservation, concurrent file modifications and
+automatic deletion staging.
+
+Integration tests use independent temporary Git repositories.
 
 ## License
 

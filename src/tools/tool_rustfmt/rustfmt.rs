@@ -33,6 +33,7 @@ impl Rustfmt {
         root: &Path,
         files: &[&Path],
         intent: ConformanceIntent,
+        mut execute: impl FnMut(&mut Command, &[&Path]) -> Result<bool, Box<dyn Error>>,
     ) -> Result<bool, Box<dyn Error>> {
         if files.is_empty() {
             return Ok(true);
@@ -57,7 +58,7 @@ impl Rustfmt {
                 command.arg("--check");
             }
 
-            passed &= command.arg(&absolute).status()?.success();
+            passed &= execute(&mut command, &[*path])?;
         }
 
         Ok(passed)
